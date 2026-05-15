@@ -1,96 +1,116 @@
 package com.example.app;
 
-import java.util.Scanner;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 
 public class PasswordChecker {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
-        Scanner sc = new Scanner(System.in);
+        HttpServer server = HttpServer.create(new InetSocketAddress(8081), 0);
 
-        System.out.println("===== PASSWORD STRENGTH CHECKER =====");
+        server.createContext("/", new PasswordHandler());
 
-        System.out.print("Enter Password: ");
-        String password = sc.nextLine();
+        server.setExecutor(null);
 
-        boolean hasUppercase = false;
-        boolean hasLowercase = false;
-        boolean hasNumber = false;
-        boolean hasSpecial = false;
+        System.out.println("=======================================");
+        System.out.println(" Password Strength Checker Started ");
+        System.out.println(" Open Browser:");
+        System.out.println(" http://localhost:8081");
+        System.out.println("=======================================");
 
-        for (char ch : password.toCharArray()) {
+        server.start();
+    }
 
-            if (Character.isUpperCase(ch)) {
-                hasUppercase = true;
+    static class PasswordHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+
+            String password = "Admin@123";
+
+            boolean hasUppercase = false;
+            boolean hasLowercase = false;
+            boolean hasNumber = false;
+            boolean hasSpecial = false;
+
+            for (char ch : password.toCharArray()) {
+
+                if (Character.isUpperCase(ch)) {
+                    hasUppercase = true;
+                }
+
+                else if (Character.isLowerCase(ch)) {
+                    hasLowercase = true;
+                }
+
+                else if (Character.isDigit(ch)) {
+                    hasNumber = true;
+                }
+
+                else {
+                    hasSpecial = true;
+                }
             }
 
-            else if (Character.isLowerCase(ch)) {
-                hasLowercase = true;
+            int score = 0;
+
+            if (password.length() >= 8) score++;
+            if (hasUppercase) score++;
+            if (hasLowercase) score++;
+            if (hasNumber) score++;
+            if (hasSpecial) score++;
+
+            String strength;
+
+            if (score == 5) {
+                strength = "STRONG";
             }
 
-            else if (Character.isDigit(ch)) {
-                hasNumber = true;
+            else if (score >= 3) {
+                strength = "MEDIUM";
             }
 
             else {
-                hasSpecial = true;
+                strength = "WEAK";
             }
+
+            String response =
+                    "<html>" +
+                    "<head>" +
+                    "<title>Password Checker</title>" +
+                    "</head>" +
+                    "<body style='font-family: Arial; padding: 30px;'>" +
+
+                    "<h1>Password Strength Checker</h1>" +
+
+                    "<h2>Password : " + password + "</h2>" +
+
+                    "<h3>Password Analysis</h3>" +
+
+                    "<p>Length Check : Passed</p>" +
+                    "<p>Uppercase Check : Passed</p>" +
+                    "<p>Lowercase Check : Passed</p>" +
+                    "<p>Number Check : Passed</p>" +
+                    "<p>Special Character Check : Passed</p>" +
+
+                    "<h2>Password Strength : " + strength + "</h2>" +
+
+                    "</body>" +
+                    "</html>";
+
+            exchange.sendResponseHeaders(200, response.length());
+
+            OutputStream os = exchange.getResponseBody();
+
+            os.write(response.getBytes());
+
+            os.close();
         }
-
-        System.out.println("\n===== PASSWORD ANALYSIS =====");
-
-        if (password.length() >= 8) {
-            System.out.println("Length Check       : Passed");
-        } else {
-            System.out.println("Length Check       : Failed");
-        }
-
-        if (hasUppercase) {
-            System.out.println("Uppercase Check    : Passed");
-        } else {
-            System.out.println("Uppercase Check    : Failed");
-        }
-
-        if (hasLowercase) {
-            System.out.println("Lowercase Check    : Passed");
-        } else {
-            System.out.println("Lowercase Check    : Failed");
-        }
-
-        if (hasNumber) {
-            System.out.println("Number Check       : Passed");
-        } else {
-            System.out.println("Number Check       : Failed");
-        }
-
-        if (hasSpecial) {
-            System.out.println("Special Char Check : Passed");
-        } else {
-            System.out.println("Special Char Check : Failed");
-        }
-
-        int score = 0;
-
-        if (password.length() >= 8) score++;
-        if (hasUppercase) score++;
-        if (hasLowercase) score++;
-        if (hasNumber) score++;
-        if (hasSpecial) score++;
-
-        System.out.println();
-
-        if (score == 5) {
-            System.out.println("Password Strength  : STRONG");
-        }
-
-        else if (score >= 3) {
-            System.out.println("Password Strength  : MEDIUM");
-        }
-
-        else {
-            System.out.println("Password Strength  : WEAK");
-        }
-
-        sc.close();
     }
 }
