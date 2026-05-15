@@ -1,12 +1,13 @@
 package com.example.app;
 
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 public class PasswordChecker {
 
@@ -18,11 +19,11 @@ public class PasswordChecker {
 
         server.setExecutor(null);
 
-        System.out.println("=======================================");
+        System.out.println("====================================");
         System.out.println(" Password Strength Checker Started ");
         System.out.println(" Open Browser:");
         System.out.println(" http://localhost:8081");
-        System.out.println("=======================================");
+        System.out.println("====================================");
 
         server.start();
     }
@@ -32,79 +33,136 @@ public class PasswordChecker {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
 
-            String password = "Admin@123";
+            String response = "";
 
-            boolean hasUppercase = false;
-            boolean hasLowercase = false;
-            boolean hasNumber = false;
-            boolean hasSpecial = false;
+            if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
 
-            for (char ch : password.toCharArray()) {
+                InputStream inputStream = exchange.getRequestBody();
 
-                if (Character.isUpperCase(ch)) {
-                    hasUppercase = true;
+                String formData = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+
+                String password = URLDecoder.decode(formData.split("=")[1], "UTF-8");
+
+                boolean hasUppercase = false;
+                boolean hasLowercase = false;
+                boolean hasNumber = false;
+                boolean hasSpecial = false;
+
+                for (char ch : password.toCharArray()) {
+
+                    if (Character.isUpperCase(ch)) {
+                        hasUppercase = true;
+                    }
+
+                    else if (Character.isLowerCase(ch)) {
+                        hasLowercase = true;
+                    }
+
+                    else if (Character.isDigit(ch)) {
+                        hasNumber = true;
+                    }
+
+                    else {
+                        hasSpecial = true;
+                    }
                 }
 
-                else if (Character.isLowerCase(ch)) {
-                    hasLowercase = true;
+                int score = 0;
+
+                if (password.length() >= 8) score++;
+                if (hasUppercase) score++;
+                if (hasLowercase) score++;
+                if (hasNumber) score++;
+                if (hasSpecial) score++;
+
+                String strength;
+
+                if (score == 5) {
+                    strength = "STRONG";
                 }
 
-                else if (Character.isDigit(ch)) {
-                    hasNumber = true;
+                else if (score >= 3) {
+                    strength = "MEDIUM";
                 }
 
                 else {
-                    hasSpecial = true;
+                    strength = "WEAK";
                 }
-            }
 
-            int score = 0;
+                response =
+                        "<html>" +
+                        "<head><title>Password Checker</title></head>" +
 
-            if (password.length() >= 8) score++;
-            if (hasUppercase) score++;
-            if (hasLowercase) score++;
-            if (hasNumber) score++;
-            if (hasSpecial) score++;
+                        "<body style='font-family: Arial; padding: 30px;'>"
 
-            String strength;
+                        + "<h1>Password Strength Checker</h1>"
 
-            if (score == 5) {
-                strength = "STRONG";
-            }
+                        + "<form method='POST'>"
 
-            else if (score >= 3) {
-                strength = "MEDIUM";
+                        + "<input type='password' name='password' "
+                        + "placeholder='Enter Password' required "
+                        + "style='padding:10px; width:300px;'>"
+
+                        + "<br><br>"
+
+                        + "<button type='submit' "
+                        + "style='padding:10px 20px;'>Check Password</button>"
+
+                        + "</form>"
+
+                        + "<hr>"
+
+                        + "<h2>Password Analysis</h2>"
+
+                        + "<p><b>Password:</b> " + password + "</p>"
+
+                        + "<p>Length Check : "
+                        + (password.length() >= 8 ? "Passed" : "Failed") + "</p>"
+
+                        + "<p>Uppercase Check : "
+                        + (hasUppercase ? "Passed" : "Failed") + "</p>"
+
+                        + "<p>Lowercase Check : "
+                        + (hasLowercase ? "Passed" : "Failed") + "</p>"
+
+                        + "<p>Number Check : "
+                        + (hasNumber ? "Passed" : "Failed") + "</p>"
+
+                        + "<p>Special Character Check : "
+                        + (hasSpecial ? "Passed" : "Failed") + "</p>"
+
+                        + "<h2>Password Strength : " + strength + "</h2>"
+
+                        + "</body></html>";
             }
 
             else {
-                strength = "WEAK";
+
+                response =
+                        "<html>" +
+                        "<head><title>Password Checker</title></head>" +
+
+                        "<body style='font-family: Arial; padding: 30px;'>"
+
+                        + "<h1>Password Strength Checker</h1>"
+
+                        + "<form method='POST'>"
+
+                        + "<input type='password' name='password' "
+                        + "placeholder='Enter Password' required "
+                        + "style='padding:10px; width:300px;'>"
+
+                        + "<br><br>"
+
+                        + "<button type='submit' "
+                        + "style='padding:10px 20px;'>Check Password</button>"
+
+                        + "</form>"
+
+                        + "</body></html>";
             }
 
-            String response =
-                    "<html>" +
-                    "<head>" +
-                    "<title>Password Checker</title>" +
-                    "</head>" +
-                    "<body style='font-family: Arial; padding: 30px;'>" +
-
-                    "<h1>Password Strength Checker</h1>" +
-
-                    "<h2>Password : " + password + "</h2>" +
-
-                    "<h3>Password Analysis</h3>" +
-
-                    "<p>Length Check : Passed</p>" +
-                    "<p>Uppercase Check : Passed</p>" +
-                    "<p>Lowercase Check : Passed</p>" +
-                    "<p>Number Check : Passed</p>" +
-                    "<p>Special Character Check : Passed</p>" +
-
-                    "<h2>Password Strength : " + strength + "</h2>" +
-
-                    "</body>" +
-                    "</html>";
-
-            exchange.sendResponseHeaders(200, response.length());
+            exchange.sendResponseHeaders(200, response.getBytes().length);
 
             OutputStream os = exchange.getResponseBody();
 
