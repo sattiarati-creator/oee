@@ -2,15 +2,17 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'
-        jdk 'JDK17'
+        maven 'Maven'
+        jdk 'JDK21'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Checking project files'
+                git branch: 'main',
+                    url: 'https://github.com/sattiarati-creator/oee.git',
+                    credentialsId: 'github-token'
             }
         }
 
@@ -20,15 +22,15 @@ pipeline {
             }
         }
 
-        stage('Run Application') {
-            steps {
-                sh 'mvn exec:java'
-            }
-        }
-
         stage('Package') {
             steps {
                 sh 'mvn package'
+            }
+        }
+
+        stage('Run Application') {
+            steps {
+                sh 'mvn exec:java -Dexec.mainClass="com.example.app.PasswordChecker"'
             }
         }
     }
@@ -36,11 +38,35 @@ pipeline {
     post {
 
         success {
-            echo 'Build Successful!'
+            emailext (
+                subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+Build completed successfully.
+
+Project: Password Strength Checker
+Status : SUCCESS
+
+Check Build:
+${BUILD_URL}
+""",
+                to: "sattiarati@gmail.com"
+            )
         }
 
         failure {
-            echo 'Build Failed!'
+            emailext (
+                subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+Build failed.
+
+Project: Password Strength Checker
+Status : FAILED
+
+Check Build:
+${BUILD_URL}
+""",
+                to: "sattiarati@gmail.com"
+            )
         }
     }
 }
