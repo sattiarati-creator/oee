@@ -37,4 +37,42 @@ pipeline {
             }
         }
     }
+
+    post {
+
+        success {
+            emailext (
+                subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+Build completed successfully.
+
+Project Name:
+Password Strength Checker
+
+Application URL:
+http://localhost:8081
+
+Build URL:
+${BUILD_URL}
+""",
+                to: "sattiarati@gmail.com"
+            )
+        }
+
+        failure {
+            emailext (
+                subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+Build failed.
+
+Project Name:
+Password Strength Checker
+
+Check Build:
+${BUILD_URL}
+""",
+                to: "sattiarati@gmail.com"
+            )
+        }
+    }
 }
