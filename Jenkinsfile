@@ -11,7 +11,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/sattiarati-creator/oee.git',
+                    url: 'https://github.com/sattiarati-creator/oee.git
+',
                     credentialsId: 'github-token'
             }
         }
@@ -30,7 +31,10 @@ pipeline {
 
         stage('Run Application') {
             steps {
-                sh 'mvn exec:java -Dexec.mainClass="com.example.app.PasswordChecker"'
+                sh '''
+                pkill -f PasswordChecker || true
+                nohup mvn exec:java -Dexec.mainClass="com.example.app.PasswordChecker" > output.log 2>&1 &
+                '''
             }
         }
     }
@@ -43,10 +47,10 @@ pipeline {
                 body: """
 Build completed successfully.
 
-Project: Password Strength Checker
-Status : SUCCESS
+Application URL:
+http://localhost:8081
 
-Check Build:
+Build URL:
 ${BUILD_URL}
 """,
                 to: "sattiarati@gmail.com"
@@ -59,10 +63,7 @@ ${BUILD_URL}
                 body: """
 Build failed.
 
-Project: Password Strength Checker
-Status : FAILED
-
-Check Build:
+Check:
 ${BUILD_URL}
 """,
                 to: "sattiarati@gmail.com"
