@@ -1,174 +1,124 @@
 package com.example.app;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
+import com.sun.net.httpserver.HttpServer;
+
 public class PasswordChecker {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(8081), 0);
+        HttpServer server = HttpServer.create(
+                new InetSocketAddress("0.0.0.0", 8081), 0);
 
-        server.createContext("/", new PasswordHandler());
-
-        server.setExecutor(null);
-
-        System.out.println("====================================");
-        System.out.println(" Password Strength Checker Started ");
-        System.out.println(" Open Browser:");
-        System.out.println(" http://localhost:8081");
-        System.out.println("====================================");
-
-        server.start();
-    }
-
-    static class PasswordHandler implements HttpHandler {
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
+        server.createContext("/", exchange -> {
 
             String response = "";
 
-            if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+            if ("POST".equals(exchange.getRequestMethod())) {
 
-                InputStream inputStream = exchange.getRequestBody();
+                byte[] data = exchange.getRequestBody().readAllBytes();
+                String formData = new String(data, StandardCharsets.UTF_8);
 
-                String formData = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                String password = formData.split("=")[1];
+                password = URLDecoder.decode(password, StandardCharsets.UTF_8);
 
-                String password = URLDecoder.decode(formData.split("=")[1], "UTF-8");
-
-                boolean hasUppercase = false;
-                boolean hasLowercase = false;
-                boolean hasNumber = false;
+                boolean hasUpper = false;
+                boolean hasLower = false;
+                boolean hasDigit = false;
                 boolean hasSpecial = false;
 
                 for (char ch : password.toCharArray()) {
-
-                    if (Character.isUpperCase(ch)) {
-                        hasUppercase = true;
-                    }
-
-                    else if (Character.isLowerCase(ch)) {
-                        hasLowercase = true;
-                    }
-
-                    else if (Character.isDigit(ch)) {
-                        hasNumber = true;
-                    }
-
-                    else {
+                    if (Character.isUpperCase(ch))
+                        hasUpper = true;
+                    else if (Character.isLowerCase(ch))
+                        hasLower = true;
+                    else if (Character.isDigit(ch))
+                        hasDigit = true;
+                    else
                         hasSpecial = true;
-                    }
                 }
-
-                int score = 0;
-
-                if (password.length() >= 8) score++;
-                if (hasUppercase) score++;
-                if (hasLowercase) score++;
-                if (hasNumber) score++;
-                if (hasSpecial) score++;
 
                 String strength;
 
-                if (score == 5) {
+                if (password.length() >= 8 &&
+                        hasUpper && hasLower &&
+                        hasDigit && hasSpecial) {
+
                     strength = "STRONG";
-                }
 
-                else if (score >= 3) {
+                } else if (password.length() >= 6 &&
+                        (hasUpper || hasDigit)) {
+
                     strength = "MEDIUM";
-                }
 
-                else {
+                } else {
                     strength = "WEAK";
                 }
 
                 response =
                         "<html>" +
                         "<head><title>Password Checker</title></head>" +
+                        "<body style='font-family:Arial'>" +
+                        "<h1>Password Strength Checker</h1>" +
 
-                        "<body style='font-family: Arial; padding: 30px;'>"
+                        "<p><b>Password:</b> " + password + "</p>" +
 
-                        + "<h1>Password Strength Checker</h1>"
+                        "<p>Length Check : "
+                        + (password.length() >= 8 ? "Passed" : "Failed") + "</p>" +
 
-                        + "<form method='POST'>"
+                        "<p>Uppercase Check : "
+                        + (hasUpper ? "Passed" : "Failed") + "</p>" +
 
-                        + "<input type='password' name='password' "
-                        + "placeholder='Enter Password' required "
-                        + "style='padding:10px; width:300px;'>"
+                        "<p>Lowercase Check : "
+                        + (hasLower ? "Passed" : "Failed") + "</p>" +
 
-                        + "<br><br>"
+                        "<p>Number Check : "
+                        + (hasDigit ? "Passed" : "Failed") + "</p>" +
 
-                        + "<button type='submit' "
-                        + "style='padding:10px 20px;'>Check Password</button>"
+                        "<p>Special Character Check : "
+                        + (hasSpecial ? "Passed" : "Failed") + "</p>" +
 
-                        + "</form>"
+                        "<h2>Password Strength : " + strength + "</h2>" +
 
-                        + "<hr>"
+                        "<br><a href='/'>Check Another Password</a>" +
+                        "</body></html>";
 
-                        + "<h2>Password Analysis</h2>"
-
-                        + "<p><b>Password:</b> " + password + "</p>"
-
-                        + "<p>Length Check : "
-                        + (password.length() >= 8 ? "Passed" : "Failed") + "</p>"
-
-                        + "<p>Uppercase Check : "
-                        + (hasUppercase ? "Passed" : "Failed") + "</p>"
-
-                        + "<p>Lowercase Check : "
-                        + (hasLowercase ? "Passed" : "Failed") + "</p>"
-
-                        + "<p>Number Check : "
-                        + (hasNumber ? "Passed" : "Failed") + "</p>"
-
-                        + "<p>Special Character Check : "
-                        + (hasSpecial ? "Passed" : "Failed") + "</p>"
-
-                        + "<h2>Password Strength : " + strength + "</h2>"
-
-                        + "</body></html>";
-            }
-
-            else {
+            } else {
 
                 response =
                         "<html>" +
                         "<head><title>Password Checker</title></head>" +
+                        "<body style='font-family:Arial'>" +
+                        "<h1>Password Strength Checker</h1>" +
 
-                        "<body style='font-family: Arial; padding: 30px;'>"
+                        "<form method='POST'>" +
+                        "<input type='password' name='password' placeholder='Enter Password' required/>" +
 
-                        + "<h1>Password Strength Checker</h1>"
+                        "<br><br>" +
 
-                        + "<form method='POST'>"
+                        "<button type='submit'>Check Password</button>" +
+                        "</form>" +
 
-                        + "<input type='password' name='password' "
-                        + "placeholder='Enter Password' required "
-                        + "style='padding:10px; width:300px;'>"
-
-                        + "<br><br>"
-
-                        + "<button type='submit' "
-                        + "style='padding:10px 20px;'>Check Password</button>"
-
-                        + "</form>"
-
-                        + "</body></html>";
+                        "</body></html>";
             }
 
             exchange.sendResponseHeaders(200, response.getBytes().length);
 
             OutputStream os = exchange.getResponseBody();
-
             os.write(response.getBytes());
-
             os.close();
-        }
+        });
+
+        server.setExecutor(null);
+        server.start();
+
+        System.out.println("Server started!");
+        System.out.println("Open browser:");
+        System.out.println("http://localhost:8081");
     }
 }
