@@ -33,12 +33,16 @@ public class PasswordChecker {
                 boolean hasSpecial = false;
 
                 for (char ch : password.toCharArray()) {
+
                     if (Character.isUpperCase(ch))
                         hasUpper = true;
+
                     else if (Character.isLowerCase(ch))
                         hasLower = true;
+
                     else if (Character.isDigit(ch))
                         hasDigit = true;
+
                     else
                         hasSpecial = true;
                 }
@@ -46,8 +50,10 @@ public class PasswordChecker {
                 String strength;
 
                 if (password.length() >= 8 &&
-                        hasUpper && hasLower &&
-                        hasDigit && hasSpecial) {
+                        hasUpper &&
+                        hasLower &&
+                        hasDigit &&
+                        hasSpecial) {
 
                     strength = "STRONG";
 
@@ -57,12 +63,13 @@ public class PasswordChecker {
                     strength = "MEDIUM";
 
                 } else {
+
                     strength = "WEAK";
                 }
 
                 response =
-                        "<html>" +
-                        "<body style='font-family:Arial'>" +
+                        "<html><body style='font-family:Arial'>" +
+
                         "<h1>Password Strength Checker</h1>" +
 
                         "<p><b>Password:</b> " + password + "</p>" +
@@ -85,21 +92,24 @@ public class PasswordChecker {
                         "<h2>Password Strength : " + strength + "</h2>" +
 
                         "<br><a href='/'>Check Another Password</a>" +
+
                         "</body></html>";
 
             } else {
 
                 response =
-                        "<html>" +
-                        "<body style='font-family:Arial'>" +
+                        "<html><body style='font-family:Arial'>" +
+
                         "<h1>Password Strength Checker</h1>" +
 
                         "<form method='POST'>" +
+
                         "<input type='password' name='password' placeholder='Enter Password' required/>" +
 
                         "<br><br>" +
 
                         "<button type='submit'>Check Password</button>" +
+
                         "</form>" +
 
                         "</body></html>";
@@ -113,10 +123,11 @@ public class PasswordChecker {
         });
 
         server.setExecutor(null);
+
         server.start();
 
-        System.out.println("Server started!");
-        System.out.println("Open browser:");
+        System.out.println("Server Started!");
+        System.out.println("Open Browser:");
         System.out.println("http://localhost:8081");
     }
 }
