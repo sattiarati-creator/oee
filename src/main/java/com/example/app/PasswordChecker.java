@@ -62,7 +62,6 @@ public class PasswordChecker {
 
                 response =
                         "<html>" +
-                        "<head><title>Password Checker</title></head>" +
                         "<body style='font-family:Arial'>" +
                         "<h1>Password Strength Checker</h1>" +
 
@@ -92,7 +91,6 @@ public class PasswordChecker {
 
                 response =
                         "<html>" +
-                        "<head><title>Password Checker</title></head>" +
                         "<body style='font-family:Arial'>" +
                         "<h1>Password Strength Checker</h1>" +
 
