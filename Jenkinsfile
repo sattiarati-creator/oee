@@ -44,10 +44,7 @@ pipeline {
             emailext (
                 subject: "SUCCESS: ${JOB_NAME} #${BUILD_NUMBER}",
                 body: """
-Build completed successfully.
-
-Project Name:
-Password Strength Checker
+Build Successful
 
 Application URL:
 http://localhost:8081
@@ -63,12 +60,9 @@ ${BUILD_URL}
             emailext (
                 subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
                 body: """
-Build failed.
+Build Failed
 
-Project Name:
-Password Strength Checker
-
-Check Build:
+Check:
 ${BUILD_URL}
 """,
                 to: "sattiarati@gmail.com"
